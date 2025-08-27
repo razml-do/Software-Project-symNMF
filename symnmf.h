@@ -14,9 +14,9 @@ double **mat_mul_indices(double **H, double **B, int rows, int cols);
 double **mat_sub(double **A, double **B, int rows, int cols);
 double frobenius_norm_squared(double **A, int rows, int cols);
 
-void iterative_free_correct(double **WH, double **H_transpose, double **HHT, double **HHTH,
-                            double **ratio_mat, double **beta_mul_and_addition, double **frob_sub,
-                            int rows, int cols);
+void iterative_free(double **WH, double **H_transpose, double **HHT, double **HHTH,
+                    double **ratio_mat, double **beta_mul_and_addition, double **frob_sub,
+                    int rows, int cols);
 void free_matrix(double ***mat, int rows);
 void free_all(double **data, double **A, double **B, double **C, double **D,
               double **E, double **F, double **G, double **H, int N);

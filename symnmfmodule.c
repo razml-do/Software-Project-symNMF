@@ -158,8 +158,8 @@ static PyObject *py_symnmf(PyObject *self, PyObject *args, PyObject *kwargs)
         frob_sub = mat_sub(H_new, H, N, k);
         double squared_frob = frobenius_norm_squared(frob_sub, N, k);
 
-        iterative_free_correct(WH, H_transpose, HHT, HHTH, ratio_mat,
-                               beta_mul_and_addition, frob_sub, N, k);
+        iterative_free(WH, H_transpose, HHT, HHTH, ratio_mat,
+                       beta_mul_and_addition, frob_sub, N, k);
 
         double **oldH = H;
         H = H_new;

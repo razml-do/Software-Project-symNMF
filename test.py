@@ -11,12 +11,11 @@ np.random.seed(1234)  # for reproducibility
 
 # Small dataset for testing
 X_small = np.array([
-    [1.0, 2.0],
-    [2.0, 1.0],
-    [4.0, 5.0],
-    [5.0, 4.0]
+    [0.0, 0.0],
+    [1.0, 0.0],
+    [0.0, 1.0],
+    [5.0, 5.0]
 ])
-
 # ----------------------------
 # Helper functions
 # ----------------------------

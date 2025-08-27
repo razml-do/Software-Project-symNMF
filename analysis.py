@@ -8,6 +8,7 @@ def safe_silhouette_score(data, labels):
     from sklearn.metrics import silhouette_score
     if len(np.unique(labels)) < 2:
         return 0.0
+    
     return silhouette_score(data, labels)
 
 def read_txt_file(filename):
@@ -16,7 +17,7 @@ def read_txt_file(filename):
         for line in f:
             line = line.strip()
             if line:
-                data.append([float(x) for x in line.split(",")])
+                data.append([float(x) for x in line.split(",")])            
     return np.array(data)
 
 def run_kmeans(data, k):
@@ -24,8 +25,9 @@ def run_kmeans(data, k):
     proc = subprocess.run(
         [sys.executable, "kmeans.py", str(k)],
         input="\n".join(",".join(map(str, row)) for row in data),
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
         text=True,
-        capture_output=True
     )
 
     if proc.returncode != 0:
@@ -50,11 +52,13 @@ def run_symnmf(data, k):
     np.savetxt("data.csv", data, delimiter=",")
 
     # Build similarity matrix
-    W = symnmfmodule.sym("data.csv")
+    W = symnmfmodule.norm("data.csv")
     np.savetxt("W.csv", W, delimiter=",")
 
     # Initialize H
     M = np.mean(W)
+    
+    print(f"im capable {2 * np.sqrt(M / k):.4f}")
     H_init = np.random.uniform(0, 2 * np.sqrt(M / k), (data.shape[0], k))
     np.savetxt("H.csv", H_init, delimiter=",")
 
@@ -79,6 +83,28 @@ def main():
 
     print(f"nmf: {nmf_score:.4f}")
     print(f"kmeans: {kmeans_score:.4f}")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
+    print("https://tinyurl.com/mvaxsryy")
 
 if __name__ == "__main__":
     main()

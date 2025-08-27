@@ -33,18 +33,21 @@ void print_matrix(double **mat, int rows, int cols)
     }
 }
 
-double **allocate_matrix(int rows, int cols, int zero_init)
+double **allocate_matrix(int rows, int cols)
 {
     int i;
+
     double **mat = malloc(sizeof(double *) * rows);
     if (!mat)
         ERROR_EXIT();
+
     for (i = 0; i < rows; i++)
     {
-        mat[i] = zero_init ? calloc(cols, sizeof(double)) : malloc(sizeof(double) * cols);
+        mat[i] = calloc(cols, sizeof(double));
         if (!mat[i])
             ERROR_EXIT();
     }
+
     return mat;
 }
 
@@ -62,12 +65,14 @@ double squared_euclidean_distance(double *p, double *q, int d)
 double **mat_const_mul_and_add(double **mat, int rows, int cols, double mul, double add)
 {
     int row, col;
-    double **ret = allocate_matrix(rows, cols, 0);
+    double **ret = allocate_matrix(rows, cols);
 
     for (row = 0; row < rows; row++)
     {
         for (col = 0; col < cols; col++)
+        {
             ret[row][col] = (mul * mat[row][col]) + add;
+        }
     }
     return ret;
 }
@@ -75,7 +80,7 @@ double **mat_const_mul_and_add(double **mat, int rows, int cols, double mul, dou
 double **mat_transpose(double **mat, int rows, int cols)
 {
     int row, col;
-    double **ret = allocate_matrix(cols, rows, 0);
+    double **ret = allocate_matrix(cols, rows);
 
     for (row = 0; row < rows; row++)
     {
@@ -88,20 +93,23 @@ double **mat_transpose(double **mat, int rows, int cols)
 double **mat_sub(double **mat1, double **mat2, int rows, int cols)
 {
     int row, col;
-    double **ret = allocate_matrix(rows, cols, 0);
+    double **ret = allocate_matrix(rows, cols);
 
     for (row = 0; row < rows; row++)
     {
         for (col = 0; col < cols; col++)
+        {
             ret[row][col] = mat1[row][col] - mat2[row][col];
+        }
     }
+
     return ret;
 }
 
 double **mat_mul_indices(double **mat1, double **mat2, int rows, int cols)
 {
     int row, col;
-    double **ret = allocate_matrix(rows, cols, 0);
+    double **ret = allocate_matrix(rows, cols);
 
     for (row = 0; row < rows; row++)
     {
@@ -109,6 +117,7 @@ double **mat_mul_indices(double **mat1, double **mat2, int rows, int cols)
         {
             if (mat2[row][col] == 0)
                 ERROR_EXIT();
+
             ret[row][col] = mat1[row][col] * mat2[row][col];
         }
     }
@@ -118,7 +127,7 @@ double **mat_mul_indices(double **mat1, double **mat2, int rows, int cols)
 double **mat_div(double **mat1, double **mat2, int rows, int cols)
 {
     int row, col;
-    double **ret = allocate_matrix(rows, cols, 0);
+    double **ret = allocate_matrix(rows, cols);
 
     for (row = 0; row < rows; row++)
     {
@@ -126,6 +135,7 @@ double **mat_div(double **mat1, double **mat2, int rows, int cols)
         {
             if (mat2[row][col] == 0)
                 ERROR_EXIT();
+
             ret[row][col] = mat1[row][col] / mat2[row][col];
         }
     }
@@ -139,7 +149,9 @@ double frobenius_norm_squared(double **mat, int rows, int cols)
     for (row = 0; row < rows; row++)
     {
         for (col = 0; col < cols; col++)
+        {
             ret += mat[row][col] * mat[row][col];
+        }
     }
     return ret;
 }
@@ -147,7 +159,7 @@ double frobenius_norm_squared(double **mat, int rows, int cols)
 double **similarity_matrix(double **mat, int d, int N)
 {
     int row, col;
-    double **ret = allocate_matrix(N, N, 0);
+    double **ret = allocate_matrix(N, N);
 
     for (row = 0; row < N; row++)
     {
@@ -164,40 +176,39 @@ double vertex_degree(double *row, int d)
 {
     double deg = 0;
     int i;
+
     for (i = 0; i < d; i++)
         deg += row[i];
+
     return deg;
 }
 
 double **diagonal_degree_matrix(double **mat, int N)
 {
-    int i, j;
-    double **ret = allocate_matrix(N, N, 0);
+    int i;
+    double **ret = allocate_matrix(N, N);
+
+    /*mat is diagonal, only operate on elements of the diagonal.*/
     for (i = 0; i < N; i++)
     {
-        for (j = 0; j < N; j++)
-        {
-            ret[i][j] = 0;
-            if (i == j)
-                ret[i][j] = vertex_degree(mat[i], N);
-        }
+        ret[i][i] = vertex_degree(mat[i], N);
     }
+
     return ret;
 }
 
 double **diagonal_inverse_square_root(double **mat, int N)
 {
-    int i, j;
-    double **ret = allocate_matrix(N, N, 0);
+    int i;
+    double **ret = allocate_matrix(N, N);
+
+    /*diagonal matrix doesn't need to inverse sqrt on all elements,
+    only operate on elements of the diagonal.*/
     for (i = 0; i < N; i++)
     {
-        for (j = 0; j < N; j++)
-        {
-            ret[i][j] = 0;
-            if (i == j)
-                ret[i][j] = 1 / sqrt(mat[i][j]);
-        }
+        ret[i][i] = 1 / sqrt(mat[i][i]);
     }
+
     return ret;
 }
 
@@ -205,7 +216,7 @@ double **mat_mul(double **mat1, int rows1, int cols1,
                  double **mat2, int rows2, int cols2)
 {
     int i, j, k;
-    double **ret = allocate_matrix(rows1, cols2, 0);
+    double **ret = allocate_matrix(rows1, cols2);
 
     if (cols1 != rows2)
         ERROR_EXIT(); /* invalid dimensions */
@@ -214,6 +225,7 @@ double **mat_mul(double **mat1, int rows1, int cols1,
     {
         for (j = 0; j < cols2; j++)
         {
+            ret[i][j] = 0;
             for (k = 0; k < cols1; k++)
             {
                 ret[i][j] += mat1[i][k] * mat2[k][j];
@@ -245,6 +257,7 @@ void free_matrix(double ***matrix, int N)
     {
         free((*matrix)[i]);
     }
+
     free(*matrix);
     *matrix = NULL;
 }
@@ -284,16 +297,17 @@ void free_all(
                 break;
             }
         }
+
         if (!already_freed && all[i])
         {
             free_matrix(&all[i], N);
         }
     }
 }
-void iterative_free_correct(double **WH, double **H_transpose, double **HHT,
-                            double **HHTH, double **ratio_mat,
-                            double **beta_mul_and_addition, double **frob_sub,
-                            int N, int k)
+void iterative_free(double **WH, double **H_transpose, double **HHT,
+                    double **HHTH, double **ratio_mat,
+                    double **beta_mul_and_addition, double **frob_sub,
+                    int N, int k)
 {
     free_matrix(&WH, N);
     free_matrix(&H_transpose, k);
@@ -392,17 +406,27 @@ double **run_symnmf(double **H, double **W, int N, int k)
 
     for (i = 0; i < max_iter; i++)
     {
+        /*
+        TODO: dont reallocate matrices in every iteration.
+              allocate once at the top once and free at end of function.
+        */
         WH = mat_mul(W, N, N, H, N, k);
         H_transpose = mat_transpose(H, N, k);
         HHT = mat_mul(H, N, k, H_transpose, k, N);
         HHTH = mat_mul(HHT, N, N, H, N, k);
         ratio_mat = mat_div(WH, HHTH, N, k);
         beta_mul_and_addition = mat_const_mul_and_add(ratio_mat, N, k, beta, 1 - beta);
+
         H_new = mat_mul_indices(H, beta_mul_and_addition, N, k);
         frob_sub = mat_sub(H_new, H, N, k);
         squared_frob = frobenius_norm_squared(frob_sub, N, k);
 
-        iterative_free_correct(WH, H_transpose, HHT, HHTH, ratio_mat, beta_mul_and_addition, frob_sub, N, k);
+        iterative_free(WH, H_transpose, HHT, HHTH, ratio_mat, beta_mul_and_addition, frob_sub, N, k);
+
+        if (H)
+        {
+            free_matrix(&H, N);
+        }
 
         H = H_new;
         H_new = NULL;
@@ -417,6 +441,7 @@ double **run_symnmf(double **H, double **W, int N, int k)
 int main(int argc, char *argv[])
 {
     int N = 0, d = 0, k = 0;
+    double m = 0;
     double **X = NULL;
     double **sim = NULL;
     double **D = NULL;
@@ -424,59 +449,84 @@ int main(int argc, char *argv[])
     double **norm_mat = NULL;
     double **H = NULL;
     double **H_final = NULL;
+    double **inverseSqrtD_Mul_A = NULL;
     int i, j;
-
-    if (argc < 3)
-    {
-        printf("An Error Has Occurred\n");
-        return 1;
-    }
-
-    /* Read input CSV file */
-    X = read_csv_file(argv[2], &N, &d);
-    if (!X)
-    {
-        printf("An Error Has Occurred\n");
-        return 1;
-    }
 
     if (strcmp(argv[1], "sym") == 0)
     {
+        if (argc < 3)
+        {
+            ERROR_EXIT(); /*not enough parameters.*/
+        }
+
+        /* Read input CSV file */
+        X = read_csv_file(argv[2], &N, &d);
+        if (!X)
+        {
+            ERROR_EXIT(); /*couldn't read file*/
+        }
+
         sim = similarity_matrix(X, d, N);
         if (!sim)
             ERROR_EXIT();
+
         print_matrix(sim, N, N);
         free_all(X, sim, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N);
     }
     else if (strcmp(argv[1], "ddg") == 0)
     {
+        /* Read input CSV file */
+        X = read_csv_file(argv[2], &N, &d);
+        if (!X)
+        {
+            ERROR_EXIT(); /*couldn't read file*/
+        }
+
         sim = similarity_matrix(X, d, N);
         if (!sim)
             ERROR_EXIT();
+
         D = diagonal_degree_matrix(sim, N);
         print_matrix(D, N, N);
         free_all(X, sim, D, NULL, NULL, NULL, NULL, NULL, NULL, N);
     }
     else if (strcmp(argv[1], "norm") == 0)
     {
+        /* Read input CSV file */
+        X = read_csv_file(argv[2], &N, &d);
+        if (!X)
+        {
+            ERROR_EXIT(); /*couldn't read file*/
+        }
+
         sim = similarity_matrix(X, d, N);
         if (!sim)
             ERROR_EXIT();
+
         D = diagonal_degree_matrix(sim, N);
         W = diagonal_inverse_square_root(D, N);
+
         norm_mat = mat_mul(W, N, N, sim, N, N);
-        double **tmp = mat_mul(norm_mat, N, N, W, N, N);
+        inverseSqrtD_Mul_A = mat_mul(norm_mat, N, N, W, N, N);
         free_matrix(&norm_mat, N);
-        norm_mat = tmp;
+        norm_mat = inverseSqrtD_Mul_A;
 
         print_matrix(norm_mat, N, N);
         free_all(X, sim, D, W, norm_mat, NULL, NULL, NULL, NULL, N);
     }
     else if (strcmp(argv[1], "symnmf") == 0)
     {
-        if (argc < 4)
+        if (argc != 4)
             ERROR_EXIT();
-        k = atoi(argv[3]);
+
+        /* Read input CSV file */
+        X = read_csv_file(argv[3], &N, &d);
+        if (!X)
+        {
+            ERROR_EXIT(); /*couldn't read file*/
+        }
+
+        k = atoi(argv[2]);
         if (k <= 0 || k > N)
             ERROR_EXIT();
 
@@ -484,33 +534,47 @@ int main(int argc, char *argv[])
         sim = similarity_matrix(X, d, N);
         if (!sim)
             ERROR_EXIT();
+
         D = diagonal_degree_matrix(sim, N);
         W = diagonal_inverse_square_root(D, N);
-        norm_mat = mat_mul(W, N, N, sim, N, N);
-        double **tmp = mat_mul(norm_mat, N, N, W, N, N);
-        free_matrix(&norm_mat, N);
-        norm_mat = tmp;
+
+        norm_mat = mat_mul(W, N, N, sim, N, N);                /*D^(-0.5) * SIM*/
+        inverseSqrtD_Mul_A = mat_mul(norm_mat, N, N, W, N, N); /*D^(-0.5) * SIM * D^(-0.5)*/
+        free_matrix(&norm_mat, N);                             /*delete first matrix for mat mul*/
+        norm_mat = inverseSqrtD_Mul_A;                         /*assign new matrix*/
 
         /* Compute m = mean of entries in normalized similarity */
-        double m = 0.0;
+        m = 0.0;
         for (i = 0; i < N; i++)
             for (j = 0; j < N; j++)
                 m += norm_mat[i][j];
         m /= (N * N);
 
         /* Initialize H with values in [0, 2*sqrt(m/k)] */
-        H = allocate_matrix(N, k, 0);
+        H = allocate_matrix(N, k);
         for (i = 0; i < N; i++)
+        {
             for (j = 0; j < k; j++)
+            {
                 H[i][j] = ((double)rand() / RAND_MAX) * 2 * sqrt(m / k);
+            }
+        }
 
         /* Run SymNMF */
         H_final = run_symnmf(H, norm_mat, N, k);
         if (!H_final)
+        {
             ERROR_EXIT();
+        }
 
         print_matrix(H_final, N, k);
-        free_all(X, sim, D, W, H, H_final, NULL, NULL, NULL, N);
+
+        free_matrix(&sim, N);
+        free_matrix(&D, N);
+        free_matrix(&W, N);
+        free_matrix(&norm_mat, N);
+        /*free_matrix(&H, N); H is freed inside run_symnmf, no need to free again.*/
+        free_matrix(&H_final, N);
     }
     else
     {
