@@ -1,7 +1,7 @@
 #ifndef SYM_NMF_H
 #define SYM_NMF_H
 
-double **read_csv_file(const char *filename, int *rows, int *cols);
+double **read_mat_from_csv_file(const char *filename, int *rows, int *cols);
 double **similarity_matrix(double **data, int d, int N);
 double **diagonal_degree_matrix(double **A, int N);
 double **diagonal_inverse_square_root(double **D, int N);

@@ -31,7 +31,7 @@ static PyObject *py_sym(PyObject *self, PyObject *args)
         return NULL;
 
     int N, d;
-    double **data = read_csv_file(data_csv, &N, &d);
+    double **data = read_mat_from_csv_file(data_csv, &N, &d);
     if (!data)
     {
         PyErr_SetString(PyExc_RuntimeError, "Failed to read CSV");
@@ -59,7 +59,7 @@ static PyObject *py_ddg(PyObject *self, PyObject *args)
         return NULL;
 
     int N, d;
-    double **data = read_csv_file(data_csv, &N, &d);
+    double **data = read_mat_from_csv_file(data_csv, &N, &d);
     if (!data)
     {
         PyErr_SetString(PyExc_RuntimeError, "Failed to read CSV");
@@ -81,7 +81,7 @@ static PyObject *py_norm(PyObject *self, PyObject *args)
         return NULL;
 
     int N, d;
-    double **data = read_csv_file(data_csv, &N, &d);
+    double **data = read_mat_from_csv_file(data_csv, &N, &d);
     if (!data)
     {
         PyErr_SetString(PyExc_RuntimeError, "Failed to read CSV");
@@ -120,10 +120,10 @@ static PyObject *py_symnmf(PyObject *self, PyObject *args, PyObject *kwargs)
     }
 
     int N, d;
-    double **data = read_csv_file(data_csv, &N, &d);
+    double **data = read_mat_from_csv_file(data_csv, &N, &d);
     int H_rows, H_cols, W_rows, W_cols;
-    double **H = read_csv_file(H_csv, &H_rows, &H_cols);
-    double **W = read_csv_file(W_csv, &W_rows, &W_cols);
+    double **H = read_mat_from_csv_file(H_csv, &H_rows, &H_cols);
+    double **W = read_mat_from_csv_file(W_csv, &W_rows, &W_cols);
 
     if (!data || !H || !W || H_rows != N || H_cols != k || W_rows != N || W_cols != N)
     {
