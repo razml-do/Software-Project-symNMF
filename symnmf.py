@@ -2,9 +2,6 @@ import sys
 import numpy as np
 import symnmfmodule
 
-symnmfmodule.sim() 
-
-
 def parse_input(file_name):
     """Read the input file into a NumPy array"""
     return np.loadtxt(file_name, delimiter=',')
@@ -14,25 +11,23 @@ def print_matrix(matrix):
     for row in matrix:
         print(",".join([f"{val:.4f}" for val in row]))
 
-def analysis_symnmf(X, k):
+def symnmf(X: list[list[float]], k: int):
     """Run the exact symnmf algorithm in main and get H_final (for analysis.py)"""
     if k is None:
             print("An Error Has Occurred")
             sys.exit(1)
             
     # Calculate the normalized similarity matrix W.
-    W = symnmfmodule.norm(X.tolist())
+    W = symnmfmodule.norm(X)
+    
     # mean of all entries in normalized similarity matrix
     m = np.mean(W)
     
-    # Calculate the initial matrix H.
     np.random.seed(1234) # The random seed required by the project.
-    H = np.random.uniform(0, 2.0 * np.sqrt(m / k), (X.shape[0], k))
-    
-    H_final = symnmfmodule.symnmf(k, W, H.tolist())
-
-    return H_final
-
+    H = np.random.uniform(0, 2.0 * np.sqrt(m / k), (len(X), k)).tolist()
+        
+    H_final = symnmfmodule.symnmf(k, W, H)     
+    return H_final   
 
 def main():
     args = sys.argv[1:]
@@ -42,6 +37,7 @@ def main():
         goal = args[0]
         file_name = args[1]
         k = None
+
     elif len(args) == 3:
         # Case: k + goal + file_name
         try:
@@ -51,6 +47,7 @@ def main():
             sys.exit(1)
         goal = args[1]
         file_name = args[2]
+
     else:
         print("An Error Has Occurred")
         sys.exit(1)
@@ -74,21 +71,4 @@ def main():
             print("An Error Has Occurred")
             sys.exit(1)
             
-        # Calculate the normalized similarity matrix W.
-        W = symnmfmodule.norm(X.tolist())
-        # mean of all entries in normalized similarity matrix
-        m = np.mean(W)
-        
-        # Calculate the initial matrix H.
-        np.random.seed(1234) # The random seed required by the project.
-        H = np.random.uniform(0, 2.0 * np.sqrt(m / k), (X.shape[0], k))
-        
-        H_final = symnmfmodule.symnmf(k, W, H.tolist())
-        print_matrix(H_final)
-
-    else:
-        print("An Error Has Occurred")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
+        print_matrix(symnmf(X, k))

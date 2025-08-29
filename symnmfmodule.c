@@ -102,7 +102,6 @@ static PyObject *py_symnmf(PyObject *self, PyObject *args, PyObject *kwargs)
     {
         return NULL; // Error in parsing arguments
     }
-
     W = transform_PyList_matrix_to_matrix(py_normalized_matrix);
 
     inital_H = transform_PyList_matrix_to_matrix(py_initial_H);
@@ -167,7 +166,6 @@ static PyObject *py_norm(PyObject *self, PyObject *args)
     {
         return NULL;
     }
-
     matrix input_datapoints = transform_PyList_matrix_to_matrix(datapoints_matrix);
     matrix norm_matrix = create_matrix(input_datapoints.rows, input_datapoints.rows);
     norm_strategy(norm_matrix, input_datapoints);

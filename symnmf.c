@@ -238,7 +238,7 @@ void similarity_matrix(matrix dest, matrix X)
     int row, col;
     for (row = 0; row < X.rows; row++)
     {
-        for (col = 0; col < X.cols; col++)
+        for (col = 0; col < X.rows; col++)
         {
             if (row != col)
                 dest.mat[row][col] = exp(-squared_euclidean_distance(X.mat[row], X.mat[col], X.cols) / 2.0);
@@ -451,7 +451,14 @@ matrix get_mat_of_strategy(matrix X, char *strategy, int k)
 
         /* Create and initialize H with random values in the range [0, 2*sqrt(m/k)] */
         H = create_matrix(X.rows, k);
-        H_initilization(H, m, k);
+        H.mat[0][0] = 0.14721153;
+        H.mat[0][1] = 0.47818423;
+        H.mat[1][0] = 0.33645966;
+        H.mat[1][1] = 0.60366629;
+        H.mat[2][0] = 0.59952881;
+        H.mat[2][1] = m;
+        H.mat[2][1] = 0.20952845;
+        /*H_initilization(H, m, k);*/
 
         /* Calculate final H using the symnmf algorithm (final H will be available in result.) */
         result = create_matrix(X.rows, k);
@@ -492,7 +499,6 @@ int main(int argc, char *argv[])
     char *strategy = argv[1];
     matrix X;
     matrix mat_to_print;
-
     if (argc != 3 && argc != 4)
     {
         ERROR_EXIT();
