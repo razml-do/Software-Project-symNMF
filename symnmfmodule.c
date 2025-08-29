@@ -1,186 +1,190 @@
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <numpy/arrayobject.h>
 #include "symnmf.h"
 
-/* Helper: convert a C double** matrix to a NumPy array */
-static PyObject *matrix_to_numpy(double **mat, int rows, int cols)
+matrix transform_PyList_matrix_to_matrix(PyObject *input_list)
 {
-    npy_intp dims[2] = {rows, cols};
-    PyObject *array = PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-    if (!array)
+    matrix empty;
+    empty.cols = -1;
+    empty.rows = -1;
+    empty.mat = NULL;
+
+    // Check if it's actually a list
+    if (!PyList_Check(input_list))
     {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to allocate NumPy array");
-        return NULL;
+        PyErr_SetString(PyExc_TypeError, "Expected a list");
+        return empty;
     }
 
-    double *data = (double *)PyArray_DATA((PyArrayObject *)array);
+    Py_ssize_t rows = PyList_Size(input_list);
+    if (rows == 0)
+    {
+        PyErr_SetString(PyExc_ValueError, "No rows in the matrix!");
+        return empty;
+    }
+
+    /* Make sure first row is a valid list and get the amount of columns. */
+    PyObject *first_row = PyList_GetItem(input_list, 0);
+    if (!PyList_Check(first_row))
+    {
+        PyErr_SetString(PyExc_TypeError, "Expected a list for a row.");
+        return empty;
+    }
+    Py_ssize_t cols = PyList_Size(first_row);
+
+    /* Make sure the rest of the rows have the same amount of columns. */
+    for (Py_ssize_t i = 0; i < rows; i++)
+    {
+        PyObject *row_list = PyList_GetItem(input_list, i);
+        if (!PyList_Check(row_list))
+        {
+            PyErr_SetString(PyExc_TypeError, "Expected a list for a row.");
+            return empty;
+        }
+
+        if (cols != PyList_Size(row_list))
+        {
+            PyErr_SetString(PyExc_ValueError, "All rows must have the same length!");
+            return empty;
+        }
+    }
+
+    /* Create our custom matrix and place the elements. */
+    matrix input_matrix = create_matrix(rows, cols);
     for (int i = 0; i < rows; i++)
+    {
+        PyObject *row_list = PyList_GetItem(input_list, i);
         for (int j = 0; j < cols; j++)
-            data[i * cols + j] = mat[i][j];
+        {
+            double val = PyFloat_AsDouble(PyList_GetItem(row_list, j));
+            if (PyErr_Occurred())
+            {
+                PyErr_SetString(PyExc_TypeError, "One of the values in the matrix is not a number.");
+                destroy_matrix(&input_matrix);
+                return empty;
+            }
 
-    return array;
+            input_matrix.mat[i][j] = val;
+        }
+    }
+
+    /* Return the final matrix. */
+    return input_matrix;
 }
 
-/* Wrapper for similarity matrix */
-static PyObject *py_sym(PyObject *self, PyObject *args)
+PyObject *transform_matrix_to_PyList(matrix mat)
 {
-    const char *data_csv;
-    if (!PyArg_ParseTuple(args, "s", &data_csv))
-        return NULL;
-
-    int N, d;
-    double **data = read_mat_from_csv_file(data_csv, &N, &d);
-    if (!data)
+    PyObject *rows = PyList_New(0);
+    for (int i = 0; i < mat.rows; i++)
     {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to read CSV");
-        return NULL;
-    }
+        PyObject *current_row = PyList_New(0);
+        for (int j = 0; j < mat.cols; j++)
+        {
+            PyList_Append(current_row, PyFloat_FromDouble(mat.mat[i][j]));
+        }
 
-    double **A = similarity_matrix(data, d, N);
-    if (!A)
-    {
-        free_all(data, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N);
-        PyErr_SetString(PyExc_RuntimeError, "Failed to compute similarity matrix");
-        return NULL;
+        PyList_Append(rows, current_row);
     }
-
-    PyObject *result = matrix_to_numpy(A, N, N);
-    free_all(data, A, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N);
-    return result;
+    return rows;
 }
 
-/* Wrapper for diagonal degree matrix */
-static PyObject *py_ddg(PyObject *self, PyObject *args)
-{
-    const char *data_csv;
-    if (!PyArg_ParseTuple(args, "s", &data_csv))
-        return NULL;
-
-    int N, d;
-    double **data = read_mat_from_csv_file(data_csv, &N, &d);
-    if (!data)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to read CSV");
-        return NULL;
-    }
-
-    double **A = similarity_matrix(data, d, N);
-    double **D = diagonal_degree_matrix(A, N);
-    PyObject *result = matrix_to_numpy(D, N, N);
-    free_all(data, A, NULL, NULL, D, NULL, NULL, NULL, NULL, N);
-    return result;
-}
-
-/* Wrapper for normalized similarity matrix */
-static PyObject *py_norm(PyObject *self, PyObject *args)
-{
-    const char *data_csv;
-    if (!PyArg_ParseTuple(args, "s", &data_csv))
-        return NULL;
-
-    int N, d;
-    double **data = read_mat_from_csv_file(data_csv, &N, &d);
-    if (!data)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to read CSV");
-        return NULL;
-    }
-
-    double **A = similarity_matrix(data, d, N);
-    double **D = diagonal_degree_matrix(A, N);
-    double **D_inv_sqrt = diagonal_inverse_square_root(D, N);
-    double **tmp = mat_mul(D_inv_sqrt, N, N, A, N, N);
-    double **norm = mat_mul(tmp, N, N, D_inv_sqrt, N, N);
-
-    PyObject *result = matrix_to_numpy(norm, N, N);
-    free_all(data, A, D_inv_sqrt, tmp, D, norm, NULL, NULL, NULL, N);
-    return result;
-}
-
-/* Wrapper for full SymNMF */
 static PyObject *py_symnmf(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-    const char *data_csv;
-    const char *H_csv = NULL;
-    const char *W_csv = NULL;
-    int k = 0;
+    PyObject *py_normalized_matrix;
+    PyObject *py_initial_H;
+    int k;
 
-    static char *kwlist[] = {"data_csv", "H_csv", "W_csv", "k", NULL};
+    matrix W;
+    matrix inital_H;
+    matrix output_matrix;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|ssi", kwlist,
-                                     &data_csv, &H_csv, &W_csv, &k))
-        return NULL;
-
-    if (!H_csv || !W_csv || k <= 0)
+    if (!PyArg_ParseTuple(args, "iOO", &k, &py_normalized_matrix, &py_initial_H))
     {
-        PyErr_SetString(PyExc_ValueError, "H_csv, W_csv, and k must be provided");
+        return NULL; // Error in parsing arguments
+    }
+
+    W = transform_PyList_matrix_to_matrix(py_normalized_matrix);
+
+    inital_H = transform_PyList_matrix_to_matrix(py_initial_H);
+    output_matrix = create_matrix(W.rows, k);
+
+    /* Compute m = mean of entries in normalized similarity */
+    symnmf_strategy(output_matrix, k, W, inital_H);
+    PyObject *output_py_matrix = transform_matrix_to_PyList(output_matrix);
+
+    destroy_matrix(&W);
+    destroy_matrix(&inital_H);
+    destroy_matrix(&output_matrix);
+
+    return output_py_matrix;
+}
+
+static PyObject *py_sim(PyObject *self, PyObject *args)
+{
+    PyObject *datapoints_matrix;
+
+    if (!PyArg_ParseTuple(args, "O", &datapoints_matrix))
+    {
         return NULL;
     }
 
-    int N, d;
-    double **data = read_mat_from_csv_file(data_csv, &N, &d);
-    int H_rows, H_cols, W_rows, W_cols;
-    double **H = read_mat_from_csv_file(H_csv, &H_rows, &H_cols);
-    double **W = read_mat_from_csv_file(W_csv, &W_rows, &W_cols);
+    matrix input_datapoints = transform_PyList_matrix_to_matrix(datapoints_matrix);
+    matrix similarity_matrix = create_matrix(input_datapoints.rows, input_datapoints.rows);
+    sim_strategy(similarity_matrix, input_datapoints);
 
-    if (!data || !H || !W || H_rows != N || H_cols != k || W_rows != N || W_cols != N)
+    PyObject *similarity_py_matrix = transform_matrix_to_PyList(similarity_matrix);
+    destroy_matrix(&input_datapoints);
+    destroy_matrix(&similarity_matrix);
+
+    return similarity_py_matrix;
+}
+
+static PyObject *py_ddg(PyObject *self, PyObject *args)
+{
+    PyObject *datapoints_matrix;
+
+    if (!PyArg_ParseTuple(args, "O", &datapoints_matrix))
     {
-        free_all(data, H, W, NULL, NULL, NULL, NULL, NULL, NULL, N);
-        PyErr_SetString(PyExc_ValueError, "Invalid input dimensions");
         return NULL;
     }
 
-    const int max_iter = 300;
-    const double beta = 0.5, epsilon = 1e-4;
-    double **WH = NULL, **H_transpose = NULL, **HHT = NULL, **HHTH = NULL;
-    double **ratio_mat = NULL, **beta_mul_and_addition = NULL, **frob_sub = NULL;
-    double **H_new = NULL;
+    matrix input_datapoints = transform_PyList_matrix_to_matrix(datapoints_matrix);
+    matrix ddg_matrix = create_matrix(input_datapoints.rows, input_datapoints.rows);
+    ddg_strategy(ddg_matrix, input_datapoints);
 
-    for (int iter = 0; iter < max_iter; iter++)
+    PyObject *ddg_py_matrix = transform_matrix_to_PyList(ddg_matrix);
+    destroy_matrix(&input_datapoints);
+    destroy_matrix(&ddg_matrix);
+
+    return ddg_py_matrix;
+}
+
+static PyObject *py_norm(PyObject *self, PyObject *args)
+{
+    PyObject *datapoints_matrix;
+
+    if (!PyArg_ParseTuple(args, "O", &datapoints_matrix))
     {
-        WH = mat_mul(W, N, N, H, N, k);
-        H_transpose = mat_transpose(H, N, k);
-        HHT = mat_mul(H, N, k, H_transpose, k, N);
-        HHTH = mat_mul(HHT, N, N, H, N, k);
-
-        /* clamp small values to avoid division by zero */
-        for (int i = 0; i < N; i++)
-            for (int j = 0; j < k; j++)
-                if (HHTH[i][j] < 1e-12)
-                    HHTH[i][j] = 1e-12;
-
-        ratio_mat = mat_div(WH, HHTH, N, k);
-        beta_mul_and_addition = mat_const_mul_and_add(ratio_mat, N, k, beta, 1 - beta);
-        H_new = mat_mul_indices(H, beta_mul_and_addition, N, k);
-
-        frob_sub = mat_sub(H_new, H, N, k);
-        double squared_frob = frobenius_norm_squared(frob_sub, N, k);
-
-        iterative_free(WH, H_transpose, HHT, HHTH, ratio_mat,
-                       beta_mul_and_addition, frob_sub, N, k);
-
-        double **oldH = H;
-        H = H_new;
-        H_new = NULL;
-        free_matrix(&oldH, N);
-
-        if (squared_frob < epsilon)
-            break;
+        return NULL;
     }
 
-    PyObject *result = matrix_to_numpy(H, N, k);
-    free_all(data, H, W, NULL, NULL, NULL, NULL, NULL, NULL, N);
-    return result;
+    matrix input_datapoints = transform_PyList_matrix_to_matrix(datapoints_matrix);
+    matrix norm_matrix = create_matrix(input_datapoints.rows, input_datapoints.rows);
+    norm_strategy(norm_matrix, input_datapoints);
+
+    PyObject *norm_py_matrix = transform_matrix_to_PyList(norm_matrix);
+    destroy_matrix(&input_datapoints);
+    destroy_matrix(&norm_matrix);
+
+    return norm_py_matrix;
 }
 
 /* Module methods */
 static PyMethodDef SymnmfMethods[] = {
-    {"sym", py_sym, METH_VARARGS, "Compute similarity matrix"},
+    {"sym", py_sim, METH_VARARGS, "Compute similarity matrix"},
     {"ddg", py_ddg, METH_VARARGS, "Compute diagonal degree matrix"},
     {"norm", py_norm, METH_VARARGS, "Compute normalized similarity matrix"},
-    {"symnmf", (PyCFunction)py_symnmf, METH_VARARGS | METH_KEYWORDS, "Run SymNMF algorithm"},
+    {"symnmf", (PyCFunction)py_symnmf, METH_VARARGS | METH_KEYWORDS, "Run the SymNMF algorithm.\nUsage: symnmf(W, H, k)\n    Where W is the normalized similarity matrix, H is the initial H and k."},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef symnmfmodule = {
@@ -192,6 +196,5 @@ static struct PyModuleDef symnmfmodule = {
 
 PyMODINIT_FUNC PyInit_symnmfmodule(void)
 {
-    import_array();
     return PyModule_Create(&symnmfmodule);
 }

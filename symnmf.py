@@ -1,8 +1,9 @@
 import sys
 import numpy as np
-import symnmf  
+import symnmfmodule
 
-np.random.seed(1234)
+symnmfmodule.sim() 
+
 
 def parse_input(file_name):
     """Read the input file into a NumPy array"""
@@ -13,55 +14,80 @@ def print_matrix(matrix):
     for row in matrix:
         print(",".join([f"{val:.4f}" for val in row]))
 
-def main():
-    if len(sys.argv) != 4:
-        print("Invalid Input!")
-        sys.exit(1)
+def analysis_symnmf(X, k):
+    """Run the exact symnmf algorithm in main and get H_final (for analysis.py)"""
+    if k is None:
+            print("An Error Has Occurred")
+            sys.exit(1)
+            
+    # Calculate the normalized similarity matrix W.
+    W = symnmfmodule.norm(X.tolist())
+    # mean of all entries in normalized similarity matrix
+    m = np.mean(W)
+    
+    # Calculate the initial matrix H.
+    np.random.seed(1234) # The random seed required by the project.
+    H = np.random.uniform(0, 2.0 * np.sqrt(m / k), (X.shape[0], k))
+    
+    H_final = symnmfmodule.symnmf(k, W, H.tolist())
 
-    try:
-        k = int(sys.argv[1])
-        goal = sys.argv[2]
-        file_name = sys.argv[3]
-    except Exception:
-        print("Invalid Input!")
+    return H_final
+
+
+def main():
+    args = sys.argv[1:]
+
+    if len(args) == 2:
+        # Case: goal + file_name (no k needed)
+        goal = args[0]
+        file_name = args[1]
+        k = None
+    elif len(args) == 3:
+        # Case: k + goal + file_name
+        try:
+            k = int(args[0])
+        except ValueError:
+            print("An Error Has Occurred")
+            sys.exit(1)
+        goal = args[1]
+        file_name = args[2]
+    else:
+        print("An Error Has Occurred")
         sys.exit(1)
 
     X = parse_input(file_name)
 
     if goal == "sym":
-        W = symnmf.sym(X)
-        print_matrix(W)
+        A = symnmfmodule.sym(X.tolist())
+        print_matrix(A)
 
     elif goal == "ddg":
-        D = symnmf.ddg(X)
+        D = symnmfmodule.ddg(X.tolist())
         print_matrix(D)
 
     elif goal == "norm":
-        normW = symnmf.norm(X)
-        print_matrix(normW)
+        W = symnmfmodule.norm(X.tolist())
+        print_matrix(W)
 
     elif goal == "symnmf":
-        # Build similarity matrix and initialize H
-        W = symnmf.sym(X)
-        m = np.mean(W)  # mean of all entries in normalized similarity matrix
+        if k is None:
+            print("An Error Has Occurred")
+            sys.exit(1)
+            
+        # Calculate the normalized similarity matrix W.
+        W = symnmfmodule.norm(X.tolist())
+        # mean of all entries in normalized similarity matrix
+        m = np.mean(W)
+        
+        # Calculate the initial matrix H.
+        np.random.seed(1234) # The random seed required by the project.
         H = np.random.uniform(0, 2.0 * np.sqrt(m / k), (X.shape[0], k))
-
-        # Save temporary CSV files to match C wrapper
-        np.savetxt("H_init.csv", H, delimiter=",")
-        np.savetxt("W.csv", W, delimiter=",")
-
-        # Call C SymNMF with filenames
-        H_final = symnmf.symnmf(file_name, "H_init.csv", "W.csv", k)
-
-
-        # Optional: fix empty clusters
-        if np.any(H_final.sum(axis=0) < 1e-6):
-            H_final += 1e-4
-
+        
+        H_final = symnmfmodule.symnmf(k, W, H.tolist())
         print_matrix(H_final)
 
     else:
-        print("Invalid Input!")
+        print("An Error Has Occurred")
         sys.exit(1)
 
 if __name__ == "__main__":
