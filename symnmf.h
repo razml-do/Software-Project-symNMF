@@ -29,7 +29,7 @@ void copy_matrix(matrix dest, matrix src);
 void matrix_add_row(matrix *M);
 
 /* Utility functions */
-void print_Matrix(matrix M);
+void print_matrix(matrix M);
 double squared_euclidean_distance(double *p, double *q, int d);
 double frobenius_norm_squared(matrix M);
 double vertex_degree(double *row, int d);
