@@ -20,7 +20,14 @@ typedef struct Matrix
     double **mat;
 } matrix;
 
-/*Create Matrix struct by allocating it's space*/
+/**
+ * create_matrix - Allocate a matrix with given rows and columns
+ * @rows: number of rows
+ * @cols: number of columns
+ *
+ * Returns a matrix with memory allocated and elements initialized to 0.
+ * On allocation failure, prints "An Error Has Occurred" and exits.
+ */
 matrix create_matrix(int rows, int cols)
 {
     int i = 0;
@@ -46,8 +53,12 @@ matrix create_matrix(int rows, int cols)
     return M;
 }
 
-/*Destroy Matrix struct by freeing it's contents.*/
-/*MUST be used ONLY on an already created matrix!*/
+/**
+ * destroy_matrix - Free memory associated with a matrix
+ * @M: pointer to matrix to destroy
+ *
+ * After freeing, sets mat=NULL and rows/cols=-1. Must only be used on a valid matrix.
+ */
 void destroy_matrix(matrix *M)
 {
     int i = 0;
@@ -62,7 +73,12 @@ void destroy_matrix(matrix *M)
     M->cols = -1;
 }
 
-/*MUST be used ONLY on an already created matrix with appropriate dimensions!*/
+/**
+ * matrix_add_row - Add a zero-initialized row to a matrix
+ * @M: pointer to matrix
+ *
+ * Reallocates memory for an extra row. Must only be used on a valid matrix.
+ */
 void copy_matrix(matrix dest, matrix src)
 {
     int i, j;
@@ -76,8 +92,12 @@ void copy_matrix(matrix dest, matrix src)
     }
 }
 
-/*Add a 0's row to matrix*/
-/*MUST be used ONLY on an already created matrix!*/
+/**
+ * matrix_add_row - Add a zero-initialized row to a matrix
+ * @M: pointer to matrix
+ *
+ * Reallocates memory for an extra row. Must only be used on a valid matrix.
+ */
 void matrix_add_row(matrix *M)
 {
     M->rows++;
@@ -90,8 +110,11 @@ void matrix_add_row(matrix *M)
         ERROR_EXIT();
 }
 
-/* -------------------- UTILITY FUNCTIONS -------------------- */
-void print_Matrix(matrix M)
+/**
+ * print_matrix - Print a matrix to stdout with 4 decimal precision
+ * @M: matrix to print
+ */
+void print_matrix(matrix M)
 {
     int i, j;
 
@@ -110,6 +133,14 @@ void print_Matrix(matrix M)
     }
 }
 
+/**
+ * squared_euclidean_distance - Compute squared Euclidean distance between two vectors
+ * @p: first vector
+ * @q: second vector
+ * @d: dimension of vectors
+ *
+ * Returns sum((p_i - q_i)^2) for i=0..d-1
+ */
 double squared_euclidean_distance(double *p, double *q, int d)
 {
     int i;
@@ -121,6 +152,13 @@ double squared_euclidean_distance(double *p, double *q, int d)
     return squareSum;
 }
 
+/**
+ * mat_const_mul_and_add - Compute dest = mul*M + add element-wise
+ * @dest: output matrix
+ * @M: input matrix
+ * @mul: multiplicative constant
+ * @add: additive constant
+ */
 void mat_const_mul_and_add(matrix dest, matrix M, double mul, double add)
 {
     int row, col;
@@ -133,6 +171,11 @@ void mat_const_mul_and_add(matrix dest, matrix M, double mul, double add)
     }
 }
 
+/**
+ * mat_transpose - Compute transpose of M into dest
+ * @dest: output matrix
+ * @M: input matrix
+ */
 void mat_transpose(matrix dest, matrix M)
 {
     int row, col;
@@ -146,6 +189,12 @@ void mat_transpose(matrix dest, matrix M)
     }
 }
 
+/**
+ * mat_sub - Compute element-wise subtraction: dest = M1 - M2
+ * @dest: output matrix
+ * @M1: first input matrix
+ * @M2: second input matrix
+ */
 void mat_sub(matrix dest, matrix M1, matrix M2)
 {
     int row, col;
@@ -159,6 +208,14 @@ void mat_sub(matrix dest, matrix M1, matrix M2)
     }
 }
 
+/**
+ * mat_mul_indices - Compute element-wise multiplication: dest = M1 * M2
+ * @dest: output matrix
+ * @M1: first input matrix
+ * @M2: second input matrix
+ *
+ * Exits on any zero in M2.
+ */
 void mat_mul_indices(matrix dest, matrix M1, matrix M2)
 {
     int row, col;
@@ -175,7 +232,14 @@ void mat_mul_indices(matrix dest, matrix M1, matrix M2)
     }
 }
 
-/*Indices div!*/
+/**
+ * mat_div - Compute element-wise division: dest = M1 / M2
+ * @dest: output matrix
+ * @M1: numerator matrix
+ * @M2: denominator matrix
+ *
+ * Exits if any element of M2 is zero.
+ */
 void mat_div(matrix dest, matrix M1, matrix M2)
 {
     int row, col;
@@ -192,6 +256,12 @@ void mat_div(matrix dest, matrix M1, matrix M2)
     }
 }
 
+/**
+ * frobenius_norm_squared - Compute squared Frobenius norm of a matrix
+ * @M: input matrix
+ *
+ * Returns sum of squares of all elements.
+ */
 double frobenius_norm_squared(matrix M)
 {
     int row, col;
@@ -206,6 +276,13 @@ double frobenius_norm_squared(matrix M)
     return squared_forbenius_norm;
 }
 
+/**
+ * vertex_degree - Compute sum of elements in a vector
+ * @row: input row vector
+ * @d: dimension
+ *
+ * Returns the sum of the vector elements.
+ */
 double vertex_degree(double *row, int d)
 {
     double deg = 0;
@@ -217,6 +294,11 @@ double vertex_degree(double *row, int d)
     return deg;
 }
 
+/**
+ * diagonal_degree_matrix - Compute diagonal degree matrix from similarity matrix
+ * @dest: output matrix (diagonal)
+ * @sim: input similarity matrix
+ */
 void diagonal_degree_matrix(matrix dest, matrix sim)
 {
     int i;
@@ -228,11 +310,13 @@ void diagonal_degree_matrix(matrix dest, matrix sim)
     }
 }
 
-/*similarity_matrix - Compute a Gaussian similarity (RBF kernel) matrix.*/
-/* For each pair of distinct rows (row ≠ col) in X, this function computes the*/
-/* squared Euclidean distance between them and converts it into a similarity score*/
-/* using the Gaussian kernel:*/
-/* sim(row, col) = exp(-||X_row - X_col||² / 2)*/
+/**
+ * similarity_matrix - Compute Gaussian similarity (RBF kernel) matrix
+ * @dest: output matrix
+ * @X: input data matrix
+ *
+ * dest(i,j) = exp(-||X_i - X_j||^2 / 2) for i != j, 0 on diagonal
+ */
 void similarity_matrix(matrix dest, matrix X)
 {
     int row, col;
@@ -257,6 +341,14 @@ void diagonal_inverse_square_root(matrix dest, matrix D)
     }
 }
 
+/**
+ * mat_mul - Standard matrix multiplication: dest = M1 * M2
+ * @dest: output matrix
+ * @M1: left matrix
+ * @M2: right matrix
+ *
+ * Exits if M1.cols != M2.rows
+ */
 void mat_mul(matrix dest, matrix M1, matrix M2)
 {
     int i, j, k;
@@ -276,6 +368,13 @@ void mat_mul(matrix dest, matrix M1, matrix M2)
         }
     }
 }
+
+/**
+ * count_commas - Count number of commas in a string
+ * @line: input string
+ *
+ * Returns number of commas found.
+ */
 int count_commas(const char *line)
 {
     int i = 0;
@@ -288,8 +387,13 @@ int count_commas(const char *line)
     return count;
 }
 
-/* -------------------- CSV READING -------------------- */
-/*Matrix must be 0x0 at start!*/
+/**
+ * read_mat_from_csv_file - Read CSV file into a matrix
+ * @filename: path to CSV file
+ * @M: matrix to fill (should be 0x0 initially)
+ *
+ * Allocates rows dynamically. Exits on any error.
+ */
 void read_mat_from_csv_file(const char *filename, matrix *M)
 {
     char line[MAX_LINE_LEN];
@@ -323,7 +427,10 @@ void read_mat_from_csv_file(const char *filename, matrix *M)
     fclose(file);
 }
 
-/* For getting m*/
+/**
+ * average_of_entries - Compute average of all elements in a matrix
+ * @W: input matrix
+ */
 double average_of_entries(matrix W)
 {
     int i, j;
@@ -335,6 +442,14 @@ double average_of_entries(matrix W)
     return avg;
 }
 
+/**
+ * H_initilization - Initialize H matrix with random values
+ * @H: matrix to initialize
+ * @m: scaling factor (average entry in similarity matrix)
+ * @k: number of clusters
+ *
+ * Random values in [0, 2*sqrt(m/k)]
+ */
 void H_initilization(matrix H, double m, int k)
 {
     int row, col;
@@ -347,11 +462,21 @@ void H_initilization(matrix H, double m, int k)
     }
 }
 
+/**
+ * sim_strategy - Compute similarity matrix from X
+ * @dest: output matrix
+ * @X: input matrix
+ */
 void sim_strategy(matrix dest, matrix X)
 {
     similarity_matrix(dest, X);
 }
 
+/**
+ * ddg_strategy - Compute diagonal degree matrix from X
+ * @dest: output matrix
+ * @X: input matrix
+ */
 void ddg_strategy(matrix dest, matrix X)
 {
     matrix A = create_matrix(X.rows, X.rows);
@@ -362,6 +487,11 @@ void ddg_strategy(matrix dest, matrix X)
     destroy_matrix(&A);
 }
 
+/**
+ * norm_strategy - Compute normalized similarity matrix: W = D^{-1/2} * A * D^{-1/2}
+ * @dest: output matrix
+ * @X: input matrix
+ */
 void norm_strategy(matrix dest, matrix X)
 {
     matrix A = create_matrix(X.rows, X.rows);
@@ -383,85 +513,127 @@ void norm_strategy(matrix dest, matrix X)
     destroy_matrix(&invsqrD_A);
 }
 
+/**
+ * perform_update_step - Perform one iteration of SymNMF multiplicative update
+ * @H: [in/out] current H matrix (updated in-place at the end)
+ * @W: normalized similarity matrix
+ * @k: number of clusters
+ * @beta: mixing parameter
+ * @buffers: array of temporary matrices, already allocated
+ *
+ * Returns: squared Frobenius norm of (H_new - H).
+ */
+static double perform_update_step(matrix H, matrix W, double beta, matrix buffers[8])
+{
+    matrix WH = buffers[0], H_transpose = buffers[1];
+    matrix HHT = buffers[2], HHTH = buffers[3];
+    matrix ratio_mat = buffers[4], beta_mul_and_addition = buffers[5];
+    matrix frob_sub = buffers[6], H_new = buffers[7];
+
+    mat_mul(WH, W, H);
+    mat_transpose(H_transpose, H);
+    mat_mul(HHT, H, H_transpose);
+    mat_mul(HHTH, HHT, H);
+    mat_div(ratio_mat, WH, HHTH);
+    mat_const_mul_and_add(beta_mul_and_addition, ratio_mat, beta, 1 - beta);
+    mat_mul_indices(H_new, H, beta_mul_and_addition);
+    mat_sub(frob_sub, H_new, H);
+
+    copy_matrix(H, H_new);
+    return frobenius_norm_squared(frob_sub);
+}
+
+/**
+ * symnmf_strategy - Perform symnmf optimization
+ * @final_H: [out] resulting H matrix
+ * @k: number of clusters
+ * @W: normalized similarity matrix
+ * @H: initialized H matrix
+ *
+ * Runs multiplicative update rules until convergence or max_iter.
+ */
 void symnmf_strategy(matrix final_H, int k, matrix W, matrix H)
 {
     const int max_iter = 300;
-    const double beta = 0.5;
-    const double epsilon = 1e-4;
+    const double beta = 0.5, epsilon = 1e-4;
     int i;
     double squared_frob;
 
-    matrix WH = create_matrix(W.rows, k);
-    matrix H_transpose = create_matrix(k, W.rows);
-    matrix HHT = create_matrix(W.rows, W.rows);
-    matrix HHTH = create_matrix(W.rows, k);
-    matrix ratio_mat = create_matrix(W.rows, k);
-    matrix beta_mul_and_addition = create_matrix(W.rows, k);
-    matrix frob_sub = create_matrix(W.rows, k);
-    matrix H_new = create_matrix(W.rows, k);
+    /* Preallocate all temporary buffers once */
+    matrix buffers[8];
+    buffers[0] = create_matrix(W.rows, k);      /* WH */
+    buffers[1] = create_matrix(k, W.rows);      /* H_transpose */
+    buffers[2] = create_matrix(W.rows, W.rows); /* HHT */
+    buffers[3] = create_matrix(W.rows, k);      /* HHTH */
+    buffers[4] = create_matrix(W.rows, k);      /* ratio_mat */
+    buffers[5] = create_matrix(W.rows, k);      /* beta_mul_and_addition */
+    buffers[6] = create_matrix(W.rows, k);      /* frob_sub */
+    buffers[7] = create_matrix(W.rows, k);      /* H_new */
 
     for (i = 0; i < max_iter; i++)
     {
-        mat_mul(WH, W, H);
-        mat_transpose(H_transpose, H);
-        mat_mul(HHT, H, H_transpose);
-        mat_mul(HHTH, HHT, H);
-        mat_div(ratio_mat, WH, HHTH);
-        mat_const_mul_and_add(beta_mul_and_addition, ratio_mat, beta, 1 - beta);
-        mat_mul_indices(H_new, H, beta_mul_and_addition);
-        mat_sub(frob_sub, H_new, H);
-        squared_frob = frobenius_norm_squared(frob_sub);
-
-        copy_matrix(H, H_new);
-
+        squared_frob = perform_update_step(H, W, beta, buffers);
         if (squared_frob < epsilon)
             break;
     }
-
     copy_matrix(final_H, H);
-
-    destroy_matrix(&WH);
-    destroy_matrix(&H_transpose);
-    destroy_matrix(&HHT);
-    destroy_matrix(&HHTH);
-    destroy_matrix(&ratio_mat);
-    destroy_matrix(&beta_mul_and_addition);
-    destroy_matrix(&frob_sub);
-    destroy_matrix(&H_new);
+    for (i = 0; i < 8; i++)
+        destroy_matrix(&buffers[i]);
 }
 
+/**
+ * initialize_for_symnmf - Prepare matrices for SymNMF optimization
+ * @X: input data matrix
+ * @k: number of clusters
+ * @W: [out] allocated normalized similarity matrix
+ * @H: [out] allocated and initialized H matrix
+ * @result: [out] allocated matrix for final H
+ *
+ * Allocates and initializes all matrices required for SymNMF.
+ * The caller is responsible for destroying these matrices after use.
+ */
+void initialize_for_symnmf(matrix X, int k, matrix *W, matrix *H, matrix *result)
+{
+    double m;
+
+    /* Allocate and compute normalized similarity matrix */
+    *W = create_matrix(X.rows, X.rows);
+    norm_strategy(*W, X);
+
+    /* Compute average entry in W */
+    m = average_of_entries(*W);
+
+    /* Allocate and initialize H with random values in [0, 2*sqrt(m/k)] */
+    *H = create_matrix(X.rows, k);
+    H_initilization(*H, m, k);
+
+    /* Allocate matrix to store final H */
+    *result = create_matrix(X.rows, k);
+}
+
+/**
+ * get_mat_of_strategy - Compute a matrix according to the chosen strategy
+ * @X: input data matrix
+ * @strategy: one of "sym", "ddg", "norm", or "symnmf"
+ * @k: number of clusters (only used for "symnmf")
+ *
+ * Returns a newly allocated matrix corresponding to the chosen strategy:
+ *   - "sym": similarity matrix
+ *   - "ddg": diagonal degree matrix
+ *   - "norm": normalized similarity matrix
+ *   - "symnmf": optimized H matrix using SymNMF
+ *
+ * The caller is responsible for destroying the returned matrix.
+ */
 matrix get_mat_of_strategy(matrix X, char *strategy, int k)
 {
     /* Optional parameters for symnmf. */
-    matrix W;
-    matrix H;
-    double m;
-
-    matrix result;
+    matrix W, H, result;
 
     /* Symnmf optimization process */
     if (strcmp(strategy, "symnmf") == 0)
     {
-        /* Get the normalized similarity matrix */
-        W = create_matrix(X.rows, X.rows);
-        norm_strategy(W, X);
-
-        /* Compute m = mean of entries in normalized similarity */
-        m = average_of_entries(W);
-
-        /* Create and initialize H with random values in the range [0, 2*sqrt(m/k)] */
-        H = create_matrix(X.rows, k);
-        H.mat[0][0] = 0.14721153;
-        H.mat[0][1] = 0.47818423;
-        H.mat[1][0] = 0.33645966;
-        H.mat[1][1] = 0.60366629;
-        H.mat[2][0] = 0.59952881;
-        H.mat[2][1] = m;
-        H.mat[2][1] = 0.20952845;
-        /*H_initilization(H, m, k);*/
-
-        /* Calculate final H using the symnmf algorithm (final H will be available in result.) */
-        result = create_matrix(X.rows, k);
+        initialize_for_symnmf(X, k, &W, &H, &result); /* Calculate final H using the symnmf algorithm */
         symnmf_strategy(result, k, W, H);
 
         destroy_matrix(&W);
@@ -470,68 +642,68 @@ matrix get_mat_of_strategy(matrix X, char *strategy, int k)
     else
     {
         result = create_matrix(X.rows, X.rows);
-
         if ((strcmp(strategy, "sym") == 0))
-        {
             sim_strategy(result, X);
-        }
         else if ((strcmp(strategy, "ddg") == 0))
-        {
             ddg_strategy(result, X);
-        }
         else if ((strcmp(strategy, "norm") == 0))
-        {
             norm_strategy(result, X);
-        }
     }
-
     return result;
 }
 
-int main(int argc, char *argv[])
+/**
+ * parse_arguments - Validate and extract parameters from argv
+ * @argc: argument count
+ * @argv: argument vector
+ * @k: [out] number of clusters (only for symnmf)
+ * @filename: [out] pointer to filename string
+ * @strategy: [out] pointer to chosen strategy string
+ *
+ * Exits with "An Error Has Occurred" on invalid input.
+ */
+void parse_arguments(int argc, char *argv[], int *k, char **filename, char **strategy)
 {
-    int k = 1;
-    int sym;
-    int ddg;
-    int norm;
-    int symnmf; /*boolean like for strategy*/
-    char *filename = NULL;
-    char *strategy = argv[1];
-    matrix X;
-    matrix mat_to_print;
+    int sym, ddg, norm, symnmf;
+
     if (argc != 3 && argc != 4)
-    {
         ERROR_EXIT();
-    }
+
+    *strategy = argv[1];
     sym = (strcmp(argv[1], "sym") == 0);
     ddg = (strcmp(argv[1], "ddg") == 0);
     norm = (strcmp(argv[1], "norm") == 0);
     symnmf = (strcmp(argv[1], "symnmf") == 0);
-    strategy = argv[1];
 
     if (sym || ddg || norm)
     {
         if (argc != 3)
-        {
             ERROR_EXIT();
-        }
-
-        filename = argv[2];
+        *filename = argv[2];
+        *k = 1; /* not used */
     }
     else if (symnmf)
     {
         if (argc != 4)
-        {
             ERROR_EXIT();
-        }
-
-        k = atoi(argv[2]);
-        filename = argv[3];
+        *k = atoi(argv[2]);
+        *filename = argv[3];
     }
     else
     {
-        ERROR_EXIT(); /*not a valid strategy*/
+        ERROR_EXIT(); /* invalid strategy */
     }
+}
+
+int main(int argc, char *argv[])
+{
+    int k = 1; /* required number of clusters */
+    char *filename = NULL;
+    char *strategy = argv[1]; /* sym, ddg, norm or symnmf */
+    matrix X, mat_to_print;
+    /* Parse command-line arguments */
+    parse_arguments(argc, argv, &k, &filename, &strategy);
+    strategy = argv[1];
 
     /* Read input CSV file */
     X = create_matrix(0, 0);
@@ -539,7 +711,7 @@ int main(int argc, char *argv[])
 
     /* Calculate desired matrix */
     mat_to_print = get_mat_of_strategy(X, strategy, k);
-    print_Matrix(mat_to_print);
+    print_matrix(mat_to_print);
     destroy_matrix(&X);
     destroy_matrix(&mat_to_print);
     return 0;

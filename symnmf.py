@@ -3,16 +3,29 @@ import numpy as np
 import symnmfmodule
 
 def parse_input(file_name):
-    """Read the input file into a NumPy array"""
+    """
+    Read the input file into a NumPy array.
+
+    :param file_name: input data
+    """
     return np.loadtxt(file_name, delimiter=',')
 
 def print_matrix(matrix):
-    """Print matrix with required formatting"""
+    """
+    Print matrix with required formatting.
+
+    :param matrix: input matrix to print
+    """
     for row in matrix:
         print(",".join([f"{val:.4f}" for val in row]))
 
 def symnmf(X: list[list[float]], k: int):
-    """Run the exact symnmf algorithm in main and get H_final (for analysis.py)"""
+    """
+    symnmf algorithm using symnmfmodule.c.
+
+    :param X: input data
+    :param k: required number of clusters
+    """
     if k is None:
             print("An Error Has Occurred")
             sys.exit(1)
@@ -30,6 +43,14 @@ def symnmf(X: list[list[float]], k: int):
     return H_final   
 
 def main():
+    """
+    Main algorithms using symnmfmodule.c.
+    cases for goal:
+        sym -> print similarity matrix
+        ddg -> print diagonal degree matrix
+        norm -> print normalized similarity matrix
+        symnmf -> print symnmf matrix
+    """
     args = sys.argv[1:]
 
     if len(args) == 2:

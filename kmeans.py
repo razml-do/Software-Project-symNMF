@@ -5,15 +5,40 @@ EPSILON = 1e-4
 ITER_MAX = 300
 
 def euclidean_distance(p, q):
+    """
+    Calculate euclidean distance between two points.
+
+    :param p: first point
+    :param q: second point
+    """
     return math.sqrt(sum((pi - qi) ** 2 for pi, qi in zip(p, q)))
 
-def centroids_converged(prev, current, epsilon):
-    return all(euclidean_distance(p, c) < epsilon for p, c in zip(prev, current))
+def centroids_converged(prev, current):
+    """
+    Returns true if distance between current and previous point
+    is smaller than epsilon (Δu < ε)
 
-def initialize_centroids(data, k):
-    return [list(data[i]) for i in range(k)]
+    :param prev: previous point
+    :param current: current point
+    """
+    return all(euclidean_distance(p, c) < EPSILON for p, c in zip(prev, current))
+
+def initialize_centroids(X, k):
+    """
+    Returns initialized centroids.
+
+    :param data: input data
+    :param k: required number of clusters
+    """
+    return [list(X[i]) for i in range(k)]
 
 def kmeans(X, k):
+    """
+    Main kmeans algorithm.
+
+    :param X: input data
+    :param k: required number of clusters
+    """
     N = len(X)
     d = len(X[0])
     if k <= 1 or k >= N:
@@ -39,7 +64,7 @@ def kmeans(X, k):
                         new_centroid[j] += X[idx][j]
                 centroids[i] = [val / len(cluster) for val in new_centroid]
 
-        if centroids_converged(prev_centroids, centroids, EPSILON):
+        if centroids_converged(prev_centroids, centroids):
             break
         
         prev_centroids = [list(c) for c in centroids]
@@ -47,10 +72,15 @@ def kmeans(X, k):
     return centroids
 
 def analysis_kmeans(X, k):
+    """
+    Main kmeans algorithm for analysis.py file.
+
+    :param X: input data
+    :param k: required number of clusters
+    """
     try:
         centroids = kmeans(X, k)
         centroids = [[round(val, 4) for val in row] for row in centroids]
         return centroids
     except:
-        print("An Error Has Occurred")
         sys.exit(1)
