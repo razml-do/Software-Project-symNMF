@@ -2,7 +2,6 @@
 #include <Python.h>
 #include "symnmf.h"
 
-
 /**
  * transform_PyList_matrix_to_matrix - Converts a Python list of lists to a C matrix.
  * @input_list: Python list of lists representing a 2D numeric array.
@@ -13,34 +12,50 @@
 matrix transform_PyList_matrix_to_matrix(PyObject *input_list)
 {
     matrix empty = {-1, -1, NULL};
-    if (!PyList_Check(input_list)) { printf("An Error Has Occurred\n"); return empty; }
+    if (!PyList_Check(input_list))
+    {
+        return empty;
+    }
 
     Py_ssize_t rows = PyList_Size(input_list);
-    if (rows == 0) { printf("An Error Has Occurred\n"); return empty; }
+    if (rows == 0)
+    {
+        return empty;
+    }
 
     PyObject *first_row = PyList_GetItem(input_list, 0);
-    if (!PyList_Check(first_row)) { printf("An Error Has Occurred\n"); return empty; }
+    if (!PyList_Check(first_row))
+    {
+        return empty;
+    }
     Py_ssize_t cols = PyList_Size(first_row);
 
-    for (Py_ssize_t i = 0; i < rows; i++) {
+    for (Py_ssize_t i = 0; i < rows; i++)
+    {
         PyObject *row = PyList_GetItem(input_list, i);
-        if (!PyList_Check(row) || PyList_Size(row) != cols) {
-            printf("An Error Has Occurred\n"); return empty;
+        if (!PyList_Check(row) || PyList_Size(row) != cols)
+        {
+            return empty;
         }
     }
 
     matrix mat = create_matrix(rows, cols);
-    for (int i = 0; i < rows; i++) {
+    for (int i = 0; i < rows; i++)
+    {
         PyObject *row = PyList_GetItem(input_list, i);
-        for (int j = 0; j < cols; j++) {
+        for (int j = 0; j < cols; j++)
+        {
             double val = PyFloat_AsDouble(PyList_GetItem(row, j));
-            if (PyErr_Occurred()) { printf("An Error Has Occurred\n"); destroy_matrix(&mat); return empty; }
+            if (PyErr_Occurred())
+            {
+                destroy_matrix(&mat);
+                return empty;
+            }
             mat.mat[i][j] = val;
         }
     }
     return mat;
 }
-
 
 /**
  * transform_matrix_to_PyList - Converts a C matrix to a Python list of lists.
@@ -63,7 +78,6 @@ PyObject *transform_matrix_to_PyList(matrix mat)
     }
     return rows;
 }
-
 
 /**
  * py_symnmf - Python wrapper for the SymNMF algorithm.
@@ -128,7 +142,6 @@ static PyObject *py_sim(PyObject *self, PyObject *args)
 
     return similarity_py_matrix;
 }
-
 
 /**
  * Python wrapper for diagonal degree.
@@ -196,7 +209,7 @@ static struct PyModuleDef symnmfmodule = {
     "symnmfmodule",                    /* m_name */
     "Python C API wrapper for SymNMF", /* m_doc */
     -1,                                /* m_size */
-    SymnmfMethods                     /* m_methods */
+    SymnmfMethods                      /* m_methods */
 };
 
 PyMODINIT_FUNC PyInit_symnmfmodule(void)

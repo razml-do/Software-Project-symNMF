@@ -1,8 +1,0 @@
-README.md
-setup.py
-symnmf.c
-symnmfmodule.c
-symnmfmodule.egg-info/PKG-INFO
-symnmfmodule.egg-info/SOURCES.txt
-symnmfmodule.egg-info/dependency_links.txt
-symnmfmodule.egg-info/top_level.txt

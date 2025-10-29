@@ -8,7 +8,10 @@ def parse_input(file_name):
 
     :param file_name: input data
     """
-    return np.loadtxt(file_name, delimiter=',')
+    X = np.loadtxt(file_name, delimiter=',')
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+    return X
 
 def print_matrix(matrix):
     """
@@ -29,16 +32,15 @@ def symnmf(X: list[list[float]], k: int):
     if k is None:
             print("An Error Has Occurred")
             sys.exit(1)
-            
     # Calculate the normalized similarity matrix W.
+    if isinstance(X, np.ndarray):
+        X = X.tolist()
     W = symnmfmodule.norm(X)
-    
     # mean of all entries in normalized similarity matrix
     m = np.mean(W)
     
     np.random.seed(1234) # The random seed required by the project.
     H = np.random.uniform(0, 2.0 * np.sqrt(m / k), (len(X), k)).tolist()
-        
     H_final = symnmfmodule.symnmf(k, W, H)     
     return H_final   
 
@@ -93,3 +95,6 @@ def main():
             sys.exit(1)
             
         print_matrix(symnmf(X, k))
+
+if __name__ == "__main__":
+    main()
